@@ -54,76 +54,76 @@ class EmailService:
         return img
     
     def create_email_content(self, member_name, qr_data):
-        """Create HTML email content with registration information"""
+        """Create modern HTML invitation email content"""
         html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <meta charset="UTF-8">
-            <title>Registration Confirmation - {Config.EVENT_NAME}</title>
+          <meta charset="UTF-8">
+          <title>{Config.EVENT_NAME} - Your Access Pass</title>
         </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
-                <!-- Header -->
-                <div style="text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; border-radius: 10px;">
-                    <h1 style="margin: 0; font-size: 28px; font-weight: bold;">{Config.EVENT_NAME}</h1>
-                    <h2 style="margin: 10px 0 0 0; font-size: 18px; font-weight: normal; opacity: 0.9;">Registration Confirmation</h2>
-                </div>
-                
-                <!-- Main Content -->
-                <div style="background-color: #f8f9fa; padding: 25px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #667eea;">
-                    <h3 style="color: #2c3e50; margin-top: 0; font-size: 22px;">Dear {member_name},</h3>
-                    
-                    <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
-                        <p style="margin: 0; font-weight: bold; color: #856404;">
-                            <strong>Registration Status:</strong> Registration is now closed due to very high interest. 
-                            All confirmed registrants will receive a personal QR code by email and WhatsApp—please present it with a valid ID (CIN or passport) at the hotel entrance.
-                        </p>
-                    </div>
-                    
-                    <p style="font-size: 16px; margin: 20px 0;">We look forward to welcoming you to our <strong>{Config.EVENT_NAME}</strong>!</p>
-                    
-                    <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <h4 style="margin-top: 0; color: #2c3e50; font-size: 18px;">📅 Event Details:</h4>
-                        <div style="margin: 15px 0;">
-                            <p style="margin: 8px 0; font-size: 16px;"><strong>📅 Date:</strong> {Config.EVENT_DATE}</p>
-                            <p style="margin: 8px 0; font-size: 16px;"><strong>🕐 Time:</strong> {Config.EVENT_TIME}</p>
-                            <p style="margin: 8px 0; font-size: 16px;"><strong>📍 Venue:</strong> {Config.EVENT_VENUE}</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- QR Code Section -->
-                <div style="text-align: center; margin: 30px 0; background-color: #f8f9fa; padding: 25px; border-radius: 10px;">
-                    <h3 style="color: #2c3e50; margin-top: 0; font-size: 20px;">🎫 Your Personal QR Code</h3>
-                    <p style="color: #6c757d; font-size: 16px; margin: 15px 0;">Please present this QR code at the entrance for verification</p>
-                    <div style="border: 3px dashed #667eea; padding: 25px; margin: 20px 0; border-radius: 10px; background-color: white;">
-                        <p style="margin: 0; color: #6c757d; font-size: 14px; font-style: italic;">QR Code attached as image below</p>
-                    </div>
-                </div>
-                
-                <!-- Important Instructions -->
-                <div style="background-color: #e8f4fd; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #17a2b8;">
-                    <h4 style="color: #2c3e50; margin-top: 0; font-size: 18px;">⚠️ Important Instructions:</h4>
-                    <ul style="margin: 15px 0; padding-left: 25px; font-size: 15px;">
-                        <li style="margin: 8px 0;"><strong>Valid ID Required:</strong> Bring your CIN or passport for verification</li>
-                        <li style="margin: 8px 0;"><strong>QR Code:</strong> Present your QR code at the hotel entrance</li>
-                        <li style="margin: 8px 0;"><strong>Arrival Time:</strong> Please arrive on time for smooth check-in</li>
-                        <li style="margin: 8px 0;"><strong>Keep This Email:</strong> Save this email and QR code for your records</li>
-                        <li style="margin: 8px 0;"><strong>Contact:</strong> Reach out if you have any questions</li>
-                    </ul>
-                </div>
-                
-                <!-- Footer -->
-                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #ecf0f1;">
-                    <p style="color: #6c757d; font-size: 14px; margin: 10px 0;">
-                        <strong>TIPCS AGA25</strong> - Annual General Assembly
-                    </p>
-                    <p style="color: #adb5bd; font-size: 12px; margin: 5px 0;">
-                        This is an automated confirmation email. Please do not reply to this email.
-                    </p>
-                </div>
+        <body style="font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 0;">
+          <div style="max-width: 650px; margin: 30px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
+            
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #007bff 0%, #6610f2 100%); color: #ffffff; text-align: center; padding: 40px 20px;">
+              <h1 style="margin: 0; font-size: 26px; font-weight: bold;">{Config.EVENT_NAME}</h1>
+              <p style="margin: 10px 0 0 0; font-size: 16px;">Your Personal Invitation & QR Access Pass</p>
             </div>
+
+            <!-- Body -->
+            <div style="padding: 30px;">
+              <h2 style="font-size: 20px; color: #333;">Dear {member_name},</h2>
+              <p style="font-size: 16px; color: #555; line-height: 1.6;">
+                We are delighted to confirm your successful registration for <strong>{Config.EVENT_NAME}</strong>.<br>
+                Please find your personal QR access code attached below. You’ll need to present it upon arrival for entry verification.
+              </p>
+
+              <div style="margin: 25px 0; background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px 20px; border-radius: 8px;">
+                <p style="margin: 0; font-size: 15px;">
+                  <strong>Event Details:</strong><br>
+                  📅 <strong>Date:</strong> {Config.EVENT_DATE}<br>
+                  🕓 <strong>Time:</strong> {Config.EVENT_TIME}<br>
+                  📍 <strong>Venue:</strong> {Config.EVENT_VENUE}
+                </p>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <h3 style="font-size: 18px; color: #333;">🎫 Your QR Access Code</h3>
+                <p style="color: #777; font-size: 14px;">Please present this code at the entrance for identification.</p>
+                <div style="margin: 20px auto; border: 2px dashed #007bff; padding: 25px; border-radius: 10px; width: fit-content; background: #ffffff;">
+                  <p style="margin: 0; color: #999; font-style: italic; font-size: 13px;">(QR code attached as image)</p>
+                </div>
+              </div>
+
+              <div style="background-color: #e8f4fd; border-left: 4px solid #17a2b8; padding: 20px; border-radius: 10px;">
+                <h4 style="margin-top: 0; color: #2c3e50; font-size: 17px;">Before You Arrive:</h4>
+                <ul style="font-size: 15px; color: #555; padding-left: 20px;">
+                  <li>Bring a valid ID (CIN or passport).</li>
+                  <li>Have your QR code ready on your phone or printed copy.</li>
+                  <li>Arrive at least 15 minutes early to complete check-in.</li>
+                  <li>Keep this email for your records.</li>
+                </ul>
+              </div>
+
+              <p style="font-size: 14px; color: #777; margin-top: 30px;">
+                For any questions, please contact our coordination team at 
+                <a href="mailto:{getattr(Config, 'SUPPORT_EMAIL', 'contact@tipcs.org')}" style="color: #007bff; text-decoration: none;">
+                  {getattr(Config, 'SUPPORT_EMAIL', 'contact@tipcs.org')}
+                </a>.
+              </p>
+
+              <p style="font-size: 13px; color: #aaa; text-align: center; margin-top: 30px;">
+                — The {Config.EVENT_NAME} Organizing Committee —
+              </p>
+            </div>
+
+            <!-- Footer -->
+            <div style="background-color: #f1f3f5; padding: 15px; text-align: center; font-size: 12px; color: #999;">
+              <p style="margin: 0;">This is an automated message. Please do not reply.</p>
+              <p style="margin: 5px 0 0 0;">© {getattr(Config, 'EVENT_YEAR', '2025')} Tunisian Institute for Peace and Conflict Studies (TIPCS)</p>
+            </div>
+          </div>
         </body>
         </html>
         """
@@ -135,18 +135,16 @@ class EmailService:
             return False, "Email credentials not configured"
         
         try:
-            # Create message
             msg = MIMEMultipart('alternative')
             msg['From'] = self.username
             msg['To'] = email
-            msg['Subject'] = f"Registration Confirmation - {Config.EVENT_NAME} - Your Personal QR Code"
+            msg['Subject'] = f"🎟️ Your Access Pass – {Config.EVENT_NAME}"
             
-            # Create HTML content
             html_content = self.create_email_content(member_name, qr_data)
             html_part = MIMEText(html_content, 'html')
             msg.attach(html_part)
             
-            # Generate and attach QR code image
+            # Generate and attach QR code
             qr_img = self.generate_qr_code_image(qr_data, member_name)
             img_buffer = BytesIO()
             qr_img.save(img_buffer, format='PNG')
@@ -156,7 +154,7 @@ class EmailService:
             img_attachment.add_header('Content-Disposition', 'attachment', filename=f'qr-code-{member_name.replace(" ", "-")}.png')
             msg.attach(img_attachment)
             
-            # Send email
+            # Send via SMTP
             server = smtplib.SMTP(self.smtp_server, self.smtp_port)
             server.starttls()
             server.login(self.username, self.password)
@@ -195,7 +193,6 @@ class EmailService:
                     'message': 'No email address provided'
                 })
             
-            # Rate limiting: pause after every batch_size emails
             if (i + 1) % batch_size == 0 and i < total_members - 1:
                 time.sleep(delay_seconds)
         
