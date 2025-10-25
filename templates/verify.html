@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Attendance - AGA QR Code System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="text-center mb-4">
+            <h2><i class="fas fa-check-circle me-2"></i>Attendance Verification</h2>
+            <p class="text-muted">Scan QR codes to verify member attendance</p>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-qrcode me-2"></i>QR Code Scanner</h5>
+                        <div class="mb-3">
+                            <label for="qr-input" class="form-label">Enter QR Code Data:</label>
+                            <input type="text" class="form-control" id="qr-input" placeholder="Scan or enter QR code data">
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="verifyQR()">
+                            <i class="fas fa-search me-2"></i>Verify QR Code
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-mobile-alt me-2"></i>Camera Scanner</h5>
+                        <div id="scanner-container" class="border rounded p-3 text-center">
+                            <i class="fas fa-camera fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Camera scanner not implemented yet</p>
+                            <small class="text-muted">Use manual input for now</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="verification-result" class="mt-4" style="display: none;">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>Today's Statistics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h3 class="text-primary" id="total-today">0</h3>
+                                <p class="text-muted mb-0">Total Members</p>
+                            </div>
+                            <div class="col-6">
+                                <h3 class="text-success" id="checked-today">0</h3>
+                                <p class="text-muted mb-0">Checked In</p>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="progress">
+                                <div class="progress-bar" id="attendance-progress" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted">Attendance Rate</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock me-2"></i>Recent Check-ins
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="recent-checkins">
+                            <p class="text-muted text-center">No recent check-ins</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>All Members Status
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Status</th>
+                                        <th>Check-in Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="members-status">
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let recentCheckins = [];
+
+function verifyQR() {
+    const qrInput = document.getElementById('qr-input');
+    const qrData = qrInput.value.trim();
+    
+    if (!qrData) {
+        showAlert('warning', 'Please enter QR code data');
+        return;
+    }
+
+    fetch('/api/verify-qr', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ qr_data: qrData })
+    })
+    .then(response => response.json())
+    .then(data => {
+        displayVerificationResult(data);
+        if (data.valid) {
+            qrInput.value = '';
+            addToRecentCheckins(data);
+            updateStatistics();
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Error verifying QR code: ' + error.message);
+    });
+}
+
+function displayVerificationResult(data) {
+    const resultDiv = document.getElementById('verification-result');
+    const className = data.valid ? 'valid' : 'invalid';
+    
+    resultDiv.innerHTML = `
+        <div class="verification-result ${className}">
+            <i class="fas fa-${data.valid ? 'check-circle' : 'times-circle'} me-2"></i>
+            ${data.message}
+            ${data.member_name ? `<br><strong>Member:</strong> ${data.member_name}` : ''}
+            ${data.check_in_time ? `<br><strong>Time:</strong> ${data.check_in_time}` : ''}
+        </div>
+    `;
+    
+    resultDiv.style.display = 'block';
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        resultDiv.style.display = 'none';
+    }, 5000);
+}
+
+function addToRecentCheckins(data) {
+    if (data.valid) {
+        recentCheckins.unshift({
+            name: data.member_name,
+            time: data.check_in_time || new Date().toLocaleString()
+        });
+        
+        // Keep only last 5
+        if (recentCheckins.length > 5) {
+            recentCheckins = recentCheckins.slice(0, 5);
+        }
+        
+        updateRecentCheckins();
+    }
+}
+
+function updateRecentCheckins() {
+    const container = document.getElementById('recent-checkins');
+    
+    if (recentCheckins.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No recent check-ins</p>';
+        return;
+    }
+    
+    let html = '';
+    recentCheckins.forEach(checkin => {
+        html += `
+            <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                <div>
+                    <strong>${checkin.name}</strong>
+                </div>
+                <small class="text-muted">${checkin.time}</small>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function updateStatistics() {
+    fetch('/api/members')
+    .then(response => response.json())
+    .then(members => {
+        const total = members.length;
+        const checkedIn = members.filter(m => m.checked_in).length;
+        const percentage = total > 0 ? Math.round((checkedIn / total) * 100) : 0;
+        
+        document.getElementById('total-today').textContent = total;
+        document.getElementById('checked-today').textContent = checkedIn;
+        document.getElementById('attendance-progress').style.width = percentage + '%';
+        
+        // Update members status table
+        updateMembersStatusTable(members);
+    })
+    .catch(error => {
+        console.error('Error updating statistics:', error);
+    });
+}
+
+function updateMembersStatusTable(members) {
+    const tbody = document.getElementById('members-status');
+    
+    if (members.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No members found</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    members.forEach(member => {
+        const statusBadge = member.checked_in 
+            ? '<span class="badge bg-success">Checked In</span>'
+            : '<span class="badge bg-secondary">Not Checked In</span>';
+        
+        const checkInTime = member.check_in_time 
+            ? new Date(member.check_in_time).toLocaleString()
+            : '-';
+        
+        html += `
+            <tr>
+                <td>${member.full_name}</td>
+                <td>${statusBadge}</td>
+                <td>${checkInTime}</td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Allow Enter key to verify QR code
+document.getElementById('qr-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        verifyQR();
+    }
+});
+
+// Update statistics on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateStatistics();
+    
+    // Update every 30 seconds
+    setInterval(updateStatistics, 30000);
+});
+</script>
+{% endblock %}

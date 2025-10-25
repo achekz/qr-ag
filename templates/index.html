@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Home - AGA QR Code System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="text-center mb-5">
+            <h1 class="display-4 text-primary">
+                <i class="fas fa-qrcode me-3"></i>AGA QR Code System
+            </h1>
+            <p class="lead">Digital invitation and attendance verification system for Annual General Assembly</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                        <h4 class="card-title">Member Management</h4>
+                        <p class="card-text">Load member data from Excel file and generate unique QR codes for each member.</p>
+                        <a href="/admin" class="btn btn-primary">
+                            <i class="fas fa-cog me-2"></i>Manage Members
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h4 class="card-title">Attendance Verification</h4>
+                        <p class="card-text">Scan QR codes at the event entrance to verify member attendance in real-time.</p>
+                        <a href="/verify" class="btn btn-success">
+                            <i class="fas fa-qrcode me-2"></i>Verify Attendance
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>System Features
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-database me-2"></i>Data Management</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Load members from Excel file</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Generate unique QR codes</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Track attendance status</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-mobile-alt me-2"></i>Verification</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Real-time QR code scanning</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Duplicate prevention</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Mobile-friendly interface</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Quick Start Guide</h6>
+                    <ol class="mb-0">
+                        <li>Go to <strong>Admin</strong> to load your Excel file and generate QR codes</li>
+                        <li>Use <strong>Verify</strong> to scan QR codes during the event</li>
+                        <li>Monitor attendance status in real-time</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
