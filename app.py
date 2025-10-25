@@ -291,6 +291,121 @@ def send_invitations():
         'message': f'Invitations sent to {len(selected_members)} members'
     })
 
+@app.route('/api/toggle-checkin', methods=['POST'])
+def toggle_checkin():
+    """Toggle member check-in status (admin function)"""
+    data = request.get_json()
+    member_id = data.get('member_id')
+    check_in = data.get('check_in')
+    
+    if not member_id or check_in is None:
+        return jsonify({
+            'success': False,
+            'message': 'Missing required parameters'
+        })
+    
+    conn = sqlite3.connect('aga_attendance.db')
+    cursor = conn.cursor()
+    
+    try:
+        # Check if member exists
+        cursor.execute('SELECT full_name FROM members WHERE member_id = ?', (member_id,))
+        member = cursor.fetchone()
+        
+        if not member:
+            conn.close()
+            return jsonify({
+                'success': False,
+                'message': 'Member not found'
+            })
+        
+        # Update check-in status
+        if check_in:
+            cursor.execute('''
+                UPDATE members 
+                SET checked_in = TRUE, check_in_time = CURRENT_TIMESTAMP 
+                WHERE member_id = ?
+            ''', (member_id,))
+            action = 'checked in'
+        else:
+            cursor.execute('''
+                UPDATE members 
+                SET checked_in = FALSE, check_in_time = NULL 
+                WHERE member_id = ?
+            ''', (member_id,))
+            action = 'checked out'
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Member {member[0]} has been {action} successfully'
+        })
+        
+    except Exception as e:
+        conn.close()
+        return jsonify({
+            'success': False,
+            'message': f'Error updating member status: {str(e)}'
+        })
+
+@app.route('/api/bulk-checkout', methods=['POST'])
+def bulk_checkout():
+    """Check out all members (admin function)"""
+    conn = sqlite3.connect('aga_attendance.db')
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            UPDATE members 
+            SET checked_in = FALSE, check_in_time = NULL 
+            WHERE checked_in = TRUE
+        ''')
+        
+        affected_rows = cursor.rowcount
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully checked out {affected_rows} members'
+        })
+        
+    except Exception as e:
+        conn.close()
+        return jsonify({
+            'success': False,
+            'message': f'Error checking out members: {str(e)}'
+        })
+
+@app.route('/api/reset-checkins', methods=['POST'])
+def reset_checkins():
+    """Reset all check-ins (admin function)"""
+    conn = sqlite3.connect('aga_attendance.db')
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            UPDATE members 
+            SET checked_in = FALSE, check_in_time = NULL
+        ''')
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'All check-ins have been reset successfully'
+        })
+        
+    except Exception as e:
+        conn.close()
+        return jsonify({
+            'success': False,
+            'message': f'Error resetting check-ins: {str(e)}'
+        })
+
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))

@@ -57,9 +57,15 @@
                             </div>
                         </div>
                         <hr>
-                        <div class="d-grid">
+                        <div class="d-grid gap-2">
                             <button class="btn btn-success" onclick="sendInvitations()">
                                 <i class="fas fa-envelope me-2"></i>Send Invitations
+                            </button>
+                            <button class="btn btn-warning" onclick="bulkCheckOut()">
+                                <i class="fas fa-sign-out-alt me-2"></i>Check Out All
+                            </button>
+                            <button class="btn btn-info" onclick="resetAllCheckIns()">
+                                <i class="fas fa-undo me-2"></i>Reset All
                             </button>
                         </div>
                     </div>
@@ -192,6 +198,14 @@ function displayMembers(membersData) {
             ? `<small class="text-muted d-block">${new Date(member.check_in_time).toLocaleString()}</small>`
             : '';
 
+        const checkInOutButton = member.checked_in 
+            ? `<button class="btn btn-sm btn-warning me-1" onclick="toggleCheckIn('${member.member_id}', false)" title="Check Out">
+                <i class="fas fa-sign-out-alt"></i>
+               </button>`
+            : `<button class="btn btn-sm btn-success me-1" onclick="toggleCheckIn('${member.member_id}', true)" title="Check In">
+                <i class="fas fa-sign-in-alt"></i>
+               </button>`;
+
         html += `
             <tr>
                 <td>${member.full_name}</td>
@@ -199,9 +213,12 @@ function displayMembers(membersData) {
                 <td>${member.phone}</td>
                 <td>${statusBadge}${checkInTime}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="showQR('${member.member_id}', '${member.full_name}')">
-                        <i class="fas fa-qrcode"></i>
-                    </button>
+                    <div class="btn-group" role="group">
+                        ${checkInOutButton}
+                        <button class="btn btn-sm btn-outline-primary" onclick="showQR('${member.member_id}', '${member.full_name}')" title="View QR Code">
+                            <i class="fas fa-qrcode"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -264,6 +281,82 @@ function sendInvitations() {
     .catch(error => {
         showAlert('danger', 'Error sending invitations: ' + error.message);
     });
+}
+
+function toggleCheckIn(memberId, checkIn) {
+    const action = checkIn ? 'check-in' : 'check-out';
+    const actionText = checkIn ? 'check in' : 'check out';
+    
+    if (confirm(`Are you sure you want to ${actionText} this member?`)) {
+        fetch('/api/toggle-checkin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                member_id: memberId, 
+                check_in: checkIn 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                loadMembersList(); // Refresh the list
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            showAlert('danger', 'Error updating member status: ' + error.message);
+        });
+    }
+}
+
+function bulkCheckOut() {
+    if (confirm('Are you sure you want to check out ALL members? This action cannot be undone.')) {
+        fetch('/api/bulk-checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                loadMembersList(); // Refresh the list
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            showAlert('danger', 'Error checking out members: ' + error.message);
+        });
+    }
+}
+
+function resetAllCheckIns() {
+    if (confirm('Are you sure you want to reset ALL check-ins? This will set all members to "Not Checked In" status.')) {
+        fetch('/api/reset-checkins', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                loadMembersList(); // Refresh the list
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            showAlert('danger', 'Error resetting check-ins: ' + error.message);
+        });
+    }
 }
 
 function showAlert(type, message) {
