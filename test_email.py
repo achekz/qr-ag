@@ -47,7 +47,7 @@ def test_email_service():
     # Test email content creation
     try:
         html_content = email_service.create_email_content(test_member_name, test_qr_data)
-        if "Registration Confirmation" in html_content and "TIPCS AGA25" in html_content:
+        if "successful registration" in html_content and "TIPCS AGA25" in html_content:
             print("[OK] Email content generation successful")
         else:
             print("[ERROR] Email content missing expected elements")
