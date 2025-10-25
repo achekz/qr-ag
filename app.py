@@ -555,6 +555,172 @@ def reset_checkins():
             'message': f'Error resetting check-ins: {str(e)}'
         })
 
+@app.route('/api/add-member', methods=['POST'])
+@admin_required
+def add_member():
+    """Add a new member to the database"""
+    data = request.get_json()
+    
+    required_fields = ['full_name', 'email']
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({
+                'success': False,
+                'message': f'{field.replace("_", " ").title()} is required'
+            })
+    
+    try:
+        conn = sqlite3.connect('aga_attendance.db')
+        cursor = conn.cursor()
+        
+        # Generate unique member ID
+        cursor.execute('SELECT MAX(CAST(member_id AS INTEGER)) FROM members WHERE member_id GLOB "[0-9]*"')
+        result = cursor.fetchone()
+        next_id = (result[0] + 1) if result[0] else 1
+        
+        # Generate unique QR code data
+        qr_data = f"AGA-{next_id}-{secrets.token_hex(4)}"
+        qr_hash = hashlib.sha256(qr_data.encode()).hexdigest()
+        
+        # Insert new member
+        cursor.execute('''
+            INSERT INTO members 
+            (member_id, full_name, email, phone, qr_code, qr_hash)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            str(next_id),
+            data['full_name'].strip(),
+            data['email'].strip(),
+            data.get('phone', '').strip(),
+            qr_data,
+            qr_hash
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Member {data["full_name"]} added successfully',
+            'member_id': str(next_id)
+        })
+        
+    except Exception as e:
+        conn.close()
+        return jsonify({
+            'success': False,
+            'message': f'Error adding member: {str(e)}'
+        })
+
+@app.route('/api/edit-member', methods=['POST'])
+@admin_required
+def edit_member():
+    """Edit an existing member's information"""
+    data = request.get_json()
+    member_id = data.get('member_id')
+    
+    if not member_id:
+        return jsonify({
+            'success': False,
+            'message': 'Member ID is required'
+        })
+    
+    required_fields = ['full_name', 'email']
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({
+                'success': False,
+                'message': f'{field.replace("_", " ").title()} is required'
+            })
+    
+    try:
+        conn = sqlite3.connect('aga_attendance.db')
+        cursor = conn.cursor()
+        
+        # Check if member exists
+        cursor.execute('SELECT full_name FROM members WHERE member_id = ?', (member_id,))
+        member = cursor.fetchone()
+        
+        if not member:
+            conn.close()
+            return jsonify({
+                'success': False,
+                'message': 'Member not found'
+            })
+        
+        # Update member information
+        cursor.execute('''
+            UPDATE members 
+            SET full_name = ?, email = ?, phone = ?
+            WHERE member_id = ?
+        ''', (
+            data['full_name'].strip(),
+            data['email'].strip(),
+            data.get('phone', '').strip(),
+            member_id
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Member {data["full_name"]} updated successfully'
+        })
+        
+    except Exception as e:
+        conn.close()
+        return jsonify({
+            'success': False,
+            'message': f'Error updating member: {str(e)}'
+        })
+
+@app.route('/api/delete-member', methods=['POST'])
+@admin_required
+def delete_member():
+    """Delete a member from the database"""
+    data = request.get_json()
+    member_id = data.get('member_id')
+    
+    if not member_id:
+        return jsonify({
+            'success': False,
+            'message': 'Member ID is required'
+        })
+    
+    try:
+        conn = sqlite3.connect('aga_attendance.db')
+        cursor = conn.cursor()
+        
+        # Check if member exists
+        cursor.execute('SELECT full_name FROM members WHERE member_id = ?', (member_id,))
+        member = cursor.fetchone()
+        
+        if not member:
+            conn.close()
+            return jsonify({
+                'success': False,
+                'message': 'Member not found'
+            })
+        
+        # Delete member
+        cursor.execute('DELETE FROM members WHERE member_id = ?', (member_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Member {member[0]} deleted successfully'
+        })
+        
+    except Exception as e:
+        conn.close()
+        return jsonify({
+            'success': False,
+            'message': f'Error deleting member: {str(e)}'
+        })
+
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))

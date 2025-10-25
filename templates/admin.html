@@ -63,6 +63,9 @@
                         </div>
                         <hr>
                         <div class="d-grid gap-2">
+                            <button class="btn btn-primary" onclick="showAddMemberModal()">
+                                <i class="fas fa-plus me-2"></i>Add New Member
+                            </button>
                             <button class="btn btn-success" onclick="showEmailModal()">
                                 <i class="fas fa-envelope me-2"></i>Send Registration Emails
                             </button>
@@ -113,6 +116,82 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" onclick="downloadQR()">
                     <i class="fas fa-download me-2"></i>Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Member Modal -->
+<div class="modal fade" id="addMemberModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>Add New Member
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm">
+                    <div class="mb-3">
+                        <label for="addFullName" class="form-label">Full Name *</label>
+                        <input type="text" class="form-control" id="addFullName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="addEmail" class="form-label">Email Address *</label>
+                        <input type="email" class="form-control" id="addEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="addPhone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="addPhone">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addMember()">
+                    <i class="fas fa-plus me-2"></i>Add Member
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Member Modal -->
+<div class="modal fade" id="editMemberModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-edit me-2"></i>Edit Member
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editMemberForm">
+                    <input type="hidden" id="editMemberId">
+                    <div class="mb-3">
+                        <label for="editFullName" class="form-label">Full Name *</label>
+                        <input type="text" class="form-control" id="editFullName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">Email Address *</label>
+                        <input type="email" class="form-control" id="editEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPhone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="editPhone">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning me-2" onclick="deleteMember()">
+                    <i class="fas fa-trash me-2"></i>Delete
+                </button>
+                <button type="button" class="btn btn-primary" onclick="updateMember()">
+                    <i class="fas fa-save me-2"></i>Update Member
                 </button>
             </div>
         </div>
@@ -315,6 +394,9 @@ function displayMembers(membersData) {
                         <button class="btn btn-sm btn-outline-success" onclick="sendIndividualEmail('${member.member_id}', '${member.full_name}')" title="Send Email" ${member.email ? '' : 'disabled'}>
                             <i class="fas fa-envelope"></i>
                         </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="editMember('${member.member_id}', '${member.full_name}', '${member.email}', '${member.phone}')" title="Edit Member">
+                            <i class="fas fa-edit"></i>
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -480,6 +562,134 @@ function sendIndividualEmail(memberId, memberName) {
         })
         .catch(error => {
             showAlert('danger', 'Error sending email: ' + error.message);
+        });
+    }
+}
+
+function showAddMemberModal() {
+    // Clear form
+    document.getElementById('addFullName').value = '';
+    document.getElementById('addEmail').value = '';
+    document.getElementById('addPhone').value = '';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('addMemberModal'));
+    modal.show();
+}
+
+function addMember() {
+    const fullName = document.getElementById('addFullName').value.trim();
+    const email = document.getElementById('addEmail').value.trim();
+    const phone = document.getElementById('addPhone').value.trim();
+    
+    if (!fullName || !email) {
+        showAlert('warning', 'Please fill in all required fields (Name and Email).');
+        return;
+    }
+    
+    fetch('/api/add-member', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            full_name: fullName,
+            email: email,
+            phone: phone
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            loadMembersList(); // Refresh the list
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addMemberModal'));
+            modal.hide();
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Error adding member: ' + error.message);
+    });
+}
+
+function editMember(memberId, fullName, email, phone) {
+    // Populate edit form
+    document.getElementById('editMemberId').value = memberId;
+    document.getElementById('editFullName').value = fullName;
+    document.getElementById('editEmail').value = email;
+    document.getElementById('editPhone').value = phone || '';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('editMemberModal'));
+    modal.show();
+}
+
+function updateMember() {
+    const memberId = document.getElementById('editMemberId').value;
+    const fullName = document.getElementById('editFullName').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+    const phone = document.getElementById('editPhone').value.trim();
+    
+    if (!fullName || !email) {
+        showAlert('warning', 'Please fill in all required fields (Name and Email).');
+        return;
+    }
+    
+    fetch('/api/edit-member', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            member_id: memberId,
+            full_name: fullName,
+            email: email,
+            phone: phone
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            loadMembersList(); // Refresh the list
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editMemberModal'));
+            modal.hide();
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Error updating member: ' + error.message);
+    });
+}
+
+function deleteMember() {
+    const memberId = document.getElementById('editMemberId').value;
+    const fullName = document.getElementById('editFullName').value;
+    
+    if (confirm(`Are you sure you want to delete ${fullName}? This action cannot be undone.`)) {
+        fetch('/api/delete-member', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ member_id: memberId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                loadMembersList(); // Refresh the list
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editMemberModal'));
+                modal.hide();
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            showAlert('danger', 'Error deleting member: ' + error.message);
         });
     }
 }
