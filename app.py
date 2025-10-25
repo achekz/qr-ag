@@ -313,19 +313,129 @@ def get_members():
         'check_in_time': m[5]
     } for m in members])
 
+@app.route('/api/members-with-qr')
+@admin_required
+def get_members_with_qr():
+    """Get all members with their QR codes for email sending"""
+    conn = sqlite3.connect('aga_attendance.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT member_id, full_name, email, phone, qr_code, checked_in, check_in_time
+        FROM members ORDER BY full_name
+    ''')
+    members = cursor.fetchall()
+    conn.close()
+    
+    return jsonify([{
+        'member_id': m[0],
+        'full_name': m[1],
+        'email': m[2],
+        'phone': m[3],
+        'qr_code': m[4],
+        'checked_in': bool(m[5]),
+        'check_in_time': m[6]
+    } for m in members])
+
 @app.route('/api/send-invitations', methods=['POST'])
 @admin_required
 def send_invitations():
-    """Send invitations via email (WhatsApp integration would need additional setup)"""
+    """Send invitations via email"""
     data = request.get_json()
     selected_members = data.get('members', [])
+    send_type = data.get('type', 'bulk')  # 'bulk' or 'individual'
     
-    # This is a placeholder for email sending
-    # You'll need to configure SMTP settings
-    return jsonify({
-        'success': True,
-        'message': f'Invitations sent to {len(selected_members)} members'
-    })
+    if not selected_members:
+        return jsonify({
+            'success': False,
+            'message': 'No members selected for sending invitations'
+        })
+    
+    try:
+        from email_service import EmailService
+        email_service = EmailService()
+        
+        if send_type == 'individual':
+            # Send to individual member
+            member = selected_members[0]
+            success, message = email_service.send_single_invitation(
+                member['member_id'],
+                member['full_name'],
+                member['email'],
+                member['qr_code']
+            )
+            
+            return jsonify({
+                'success': success,
+                'message': message,
+                'member': member['full_name']
+            })
+        else:
+            # Send bulk invitations
+            results = email_service.send_bulk_invitations(selected_members)
+            stats = email_service.get_email_stats(results)
+            
+            return jsonify({
+                'success': True,
+                'message': f'Bulk email sending completed. {stats["successful"]}/{stats["total"]} emails sent successfully.',
+                'stats': stats,
+                'results': results
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error sending invitations: {str(e)}'
+        })
+
+@app.route('/api/send-single-invitation', methods=['POST'])
+@admin_required
+def send_single_invitation():
+    """Send invitation to a single member"""
+    data = request.get_json()
+    member_id = data.get('member_id')
+    
+    if not member_id:
+        return jsonify({
+            'success': False,
+            'message': 'Member ID is required'
+        })
+    
+    try:
+        # Get member data from database
+        conn = sqlite3.connect('aga_attendance.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM members WHERE member_id = ?', (member_id,))
+        member = cursor.fetchone()
+        conn.close()
+        
+        if not member:
+            return jsonify({
+                'success': False,
+                'message': 'Member not found'
+            })
+        
+        from email_service import EmailService
+        email_service = EmailService()
+        
+        success, message = email_service.send_single_invitation(
+            member[1],  # member_id
+            member[2],  # full_name
+            member[3],  # email
+            member[5]   # qr_code
+        )
+        
+        return jsonify({
+            'success': success,
+            'message': message,
+            'member': member[2]
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error sending invitation: {str(e)}'
+        })
 
 @app.route('/api/toggle-checkin', methods=['POST'])
 @admin_required

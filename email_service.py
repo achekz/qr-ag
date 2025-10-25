@@ -54,54 +54,73 @@ class EmailService:
         return img
     
     def create_email_content(self, member_name, qr_data):
-        """Create HTML email content"""
+        """Create HTML email content with registration information"""
         html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
-            <title>Invitation to {Config.EVENT_NAME}</title>
+            <title>Registration Confirmation - {Config.EVENT_NAME}</title>
         </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="color: #2c3e50;">{Config.EVENT_NAME}</h1>
-                    <h2 style="color: #34495e;">Digital Invitation</h2>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; border-radius: 10px;">
+                    <h1 style="margin: 0; font-size: 28px; font-weight: bold;">{Config.EVENT_NAME}</h1>
+                    <h2 style="margin: 10px 0 0 0; font-size: 18px; font-weight: normal; opacity: 0.9;">Registration Confirmation</h2>
                 </div>
                 
-                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h3 style="color: #2c3e50; margin-top: 0;">Dear {member_name},</h3>
-                    <p>You are cordially invited to attend our <strong>{Config.EVENT_NAME}</strong>.</p>
+                <!-- Main Content -->
+                <div style="background-color: #f8f9fa; padding: 25px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #667eea;">
+                    <h3 style="color: #2c3e50; margin-top: 0; font-size: 22px;">Dear {member_name},</h3>
                     
-                    <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0;">
-                        <h4 style="margin-top: 0; color: #2c3e50;">Event Details:</h4>
-                        <p><strong>Date:</strong> {Config.EVENT_DATE}</p>
-                        <p><strong>Time:</strong> {Config.EVENT_TIME}</p>
-                        <p><strong>Venue:</strong> {Config.EVENT_VENUE}</p>
+                    <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+                        <p style="margin: 0; font-weight: bold; color: #856404;">
+                            <strong>Registration Status:</strong> Registration is now closed due to very high interest. 
+                            All confirmed registrants will receive a personal QR code by email and WhatsApp—please present it with a valid ID (CIN or passport) at the hotel entrance.
+                        </p>
+                    </div>
+                    
+                    <p style="font-size: 16px; margin: 20px 0;">We look forward to welcoming you to our <strong>{Config.EVENT_NAME}</strong>!</p>
+                    
+                    <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h4 style="margin-top: 0; color: #2c3e50; font-size: 18px;">📅 Event Details:</h4>
+                        <div style="margin: 15px 0;">
+                            <p style="margin: 8px 0; font-size: 16px;"><strong>📅 Date:</strong> {Config.EVENT_DATE}</p>
+                            <p style="margin: 8px 0; font-size: 16px;"><strong>🕐 Time:</strong> {Config.EVENT_TIME}</p>
+                            <p style="margin: 8px 0; font-size: 16px;"><strong>📍 Venue:</strong> {Config.EVENT_VENUE}</p>
+                        </div>
                     </div>
                 </div>
                 
-                <div style="text-align: center; margin: 30px 0;">
-                    <h3 style="color: #2c3e50;">Your Digital Invitation QR Code</h3>
-                    <p style="color: #7f8c8d;">Please present this QR code at the entrance for verification</p>
-                    <div style="border: 2px dashed #bdc3c7; padding: 20px; margin: 20px 0; border-radius: 8px;">
-                        <p style="margin: 0; color: #7f8c8d;">QR Code will be attached as image</p>
+                <!-- QR Code Section -->
+                <div style="text-align: center; margin: 30px 0; background-color: #f8f9fa; padding: 25px; border-radius: 10px;">
+                    <h3 style="color: #2c3e50; margin-top: 0; font-size: 20px;">🎫 Your Personal QR Code</h3>
+                    <p style="color: #6c757d; font-size: 16px; margin: 15px 0;">Please present this QR code at the entrance for verification</p>
+                    <div style="border: 3px dashed #667eea; padding: 25px; margin: 20px 0; border-radius: 10px; background-color: white;">
+                        <p style="margin: 0; color: #6c757d; font-size: 14px; font-style: italic;">QR Code attached as image below</p>
                     </div>
                 </div>
                 
-                <div style="background-color: #e8f4fd; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <h4 style="color: #2c3e50; margin-top: 0;">Important Instructions:</h4>
-                    <ul style="margin: 10px 0; padding-left: 20px;">
-                        <li>Please arrive 15 minutes before the event starts</li>
-                        <li>Present your QR code at the entrance for verification</li>
-                        <li>Keep this email and QR code for your records</li>
-                        <li>Contact us if you have any questions</li>
+                <!-- Important Instructions -->
+                <div style="background-color: #e8f4fd; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #17a2b8;">
+                    <h4 style="color: #2c3e50; margin-top: 0; font-size: 18px;">⚠️ Important Instructions:</h4>
+                    <ul style="margin: 15px 0; padding-left: 25px; font-size: 15px;">
+                        <li style="margin: 8px 0;"><strong>Valid ID Required:</strong> Bring your CIN or passport for verification</li>
+                        <li style="margin: 8px 0;"><strong>QR Code:</strong> Present your QR code at the hotel entrance</li>
+                        <li style="margin: 8px 0;"><strong>Arrival Time:</strong> Please arrive on time for smooth check-in</li>
+                        <li style="margin: 8px 0;"><strong>Keep This Email:</strong> Save this email and QR code for your records</li>
+                        <li style="margin: 8px 0;"><strong>Contact:</strong> Reach out if you have any questions</li>
                     </ul>
                 </div>
                 
-                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ecf0f1;">
-                    <p style="color: #7f8c8d; font-size: 14px;">
-                        This is an automated invitation. Please do not reply to this email.
+                <!-- Footer -->
+                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #ecf0f1;">
+                    <p style="color: #6c757d; font-size: 14px; margin: 10px 0;">
+                        <strong>TIPCS AGA25</strong> - Annual General Assembly
+                    </p>
+                    <p style="color: #adb5bd; font-size: 12px; margin: 5px 0;">
+                        This is an automated confirmation email. Please do not reply to this email.
                     </p>
                 </div>
             </div>
@@ -120,7 +139,7 @@ class EmailService:
             msg = MIMEMultipart('alternative')
             msg['From'] = self.username
             msg['To'] = email
-            msg['Subject'] = f"Invitation to {Config.EVENT_NAME} - Digital QR Code"
+            msg['Subject'] = f"Registration Confirmation - {Config.EVENT_NAME} - Your Personal QR Code"
             
             # Create HTML content
             html_content = self.create_email_content(member_name, qr_data)
@@ -149,11 +168,13 @@ class EmailService:
         except Exception as e:
             return False, f"Error sending email: {str(e)}"
     
-    def send_bulk_invitations(self, members):
-        """Send invitations to multiple members"""
+    def send_bulk_invitations(self, members, batch_size=10, delay_seconds=1):
+        """Send invitations to multiple members with rate limiting"""
+        import time
         results = []
+        total_members = len(members)
         
-        for member in members:
+        for i, member in enumerate(members):
             if member.get('email'):
                 success, message = self.send_invitation(
                     member['full_name'],
@@ -169,9 +190,33 @@ class EmailService:
             else:
                 results.append({
                     'member': member['full_name'],
-                    'email': member['email'],
+                    'email': member.get('email', 'No email'),
                     'success': False,
                     'message': 'No email address provided'
                 })
+            
+            # Rate limiting: pause after every batch_size emails
+            if (i + 1) % batch_size == 0 and i < total_members - 1:
+                time.sleep(delay_seconds)
         
         return results
+    
+    def send_single_invitation(self, member_id, member_name, email, qr_data):
+        """Send invitation to a single member"""
+        if not email:
+            return False, "No email address provided"
+        
+        return self.send_invitation(member_name, email, qr_data)
+    
+    def get_email_stats(self, results):
+        """Get statistics from email sending results"""
+        total = len(results)
+        successful = len([r for r in results if r['success']])
+        failed = total - successful
+        
+        return {
+            'total': total,
+            'successful': successful,
+            'failed': failed,
+            'success_rate': (successful / total * 100) if total > 0 else 0
+        }

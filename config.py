@@ -15,10 +15,10 @@ class Config:
     SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', '')
     
     # Event details
-    EVENT_NAME = "Annual General Assembly"
-    EVENT_DATE = "2024-01-15"  # Update this with your event date
-    EVENT_TIME = "10:00 AM"
-    EVENT_VENUE = "Conference Hall, Main Building"
+    EVENT_NAME = "TIPCS AGA25"
+    EVENT_DATE = "Sunday, 26 October 2025"
+    EVENT_TIME = "08:00"
+    EVENT_VENUE = "Hotel Delphin El Habib, Monastir"
     
     # QR Code settings
     QR_CODE_SIZE = 10
