@@ -4,7 +4,7 @@ Annual General Assembly QR Code System
 Generates QR codes for members and provides verification system
 """
 
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, session
 import pandas as pd
 import qrcode
 import qrcode.image.svg
@@ -19,9 +19,23 @@ from email.mime.image import MIMEImage
 import os
 from datetime import datetime
 import json
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
+
+# Admin credentials
+ADMIN_USERNAME = 'admin'
+ADMIN_PASSWORD = 'admintipcs'
+
+# Authentication decorator
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Database setup
 def init_db():
@@ -154,7 +168,27 @@ def generate_qr_code(qr_data, member_name):
 def index():
     return render_template('index.html')
 
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin'))
+        else:
+            return render_template('login.html', error='Invalid username or password')
+    
+    return render_template('login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('admin_login'))
+
 @app.route('/admin')
+@admin_required
 def admin():
     return render_template('admin.html')
 
@@ -167,6 +201,7 @@ def mobile():
     return render_template('mobile.html')
 
 @app.route('/api/load-members', methods=['POST'])
+@admin_required
 def load_members():
     """Load members from CSV and generate QR codes"""
     try:
@@ -279,6 +314,7 @@ def get_members():
     } for m in members])
 
 @app.route('/api/send-invitations', methods=['POST'])
+@admin_required
 def send_invitations():
     """Send invitations via email (WhatsApp integration would need additional setup)"""
     data = request.get_json()
@@ -292,6 +328,7 @@ def send_invitations():
     })
 
 @app.route('/api/toggle-checkin', methods=['POST'])
+@admin_required
 def toggle_checkin():
     """Toggle member check-in status (admin function)"""
     data = request.get_json()
@@ -351,6 +388,7 @@ def toggle_checkin():
         })
 
 @app.route('/api/bulk-checkout', methods=['POST'])
+@admin_required
 def bulk_checkout():
     """Check out all members (admin function)"""
     conn = sqlite3.connect('aga_attendance.db')
@@ -380,6 +418,7 @@ def bulk_checkout():
         })
 
 @app.route('/api/reset-checkins', methods=['POST'])
+@admin_required
 def reset_checkins():
     """Reset all check-ins (admin function)"""
     conn = sqlite3.connect('aga_attendance.db')
