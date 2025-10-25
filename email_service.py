@@ -172,30 +172,60 @@ class EmailService:
         results = []
         total_members = len(members)
         
+        print(f"Starting bulk email sending for {total_members} members")
+        
         for i, member in enumerate(members):
-            if member.get('email'):
+            print(f"Processing member {i+1}/{total_members}: {member.get('full_name', 'Unknown')}")
+            
+            # Check if member has required fields
+            if not member.get('email'):
+                print(f"No email for {member.get('full_name', 'Unknown')}")
+                results.append({
+                    'member': member.get('full_name', 'Unknown'),
+                    'email': member.get('email', 'No email'),
+                    'success': False,
+                    'message': 'No email address provided'
+                })
+                continue
+                
+            if not member.get('qr_code'):
+                print(f"No QR code for {member.get('full_name', 'Unknown')}")
+                results.append({
+                    'member': member.get('full_name', 'Unknown'),
+                    'email': member.get('email', 'No email'),
+                    'success': False,
+                    'message': 'No QR code provided'
+                })
+                continue
+            
+            try:
                 success, message = self.send_invitation(
                     member['full_name'],
                     member['email'],
                     member['qr_code']
                 )
+                print(f"Email result for {member['full_name']}: {success} - {message}")
                 results.append({
                     'member': member['full_name'],
                     'email': member['email'],
                     'success': success,
                     'message': message
                 })
-            else:
+            except Exception as e:
+                print(f"Error sending email to {member['full_name']}: {str(e)}")
                 results.append({
                     'member': member['full_name'],
-                    'email': member.get('email', 'No email'),
+                    'email': member['email'],
                     'success': False,
-                    'message': 'No email address provided'
+                    'message': f'Error: {str(e)}'
                 })
             
+            # Rate limiting: pause after every batch_size emails
             if (i + 1) % batch_size == 0 and i < total_members - 1:
+                print(f"Batch {i+1} completed, pausing for {delay_seconds} seconds...")
                 time.sleep(delay_seconds)
         
+        print(f"Bulk email sending completed. Results: {len(results)}")
         return results
     
     def send_single_invitation(self, member_id, member_name, email, qr_data):
