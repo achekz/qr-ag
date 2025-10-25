@@ -73,10 +73,29 @@
                     <i class="fas fa-search me-2"></i>QR Code Verification
                 </h5>
                 
+                <!-- Camera Scanner Section -->
+                <div class="mb-4">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success scan-button" onclick="startCamera()" id="camera-btn">
+                            <i class="fas fa-camera me-2"></i>Scan with Camera
+                        </button>
+                        <button class="btn btn-secondary scan-button" onclick="stopCamera()" id="stop-camera-btn" style="display: none;">
+                            <i class="fas fa-stop me-2"></i>Stop Camera
+                        </button>
+                    </div>
+                    
+                    <!-- Camera Video Element -->
+                    <div id="camera-container" class="mt-3" style="display: none;">
+                        <video id="camera-video" autoplay playsinline style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;"></video>
+                        <canvas id="camera-canvas" style="display: none;"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Manual Input Section -->
                 <div class="mb-3">
-                    <label for="qr-input" class="form-label fw-bold">Enter QR Code Data:</label>
+                    <label for="qr-input" class="form-label fw-bold">Or Enter QR Code Manually:</label>
                     <input type="text" class="form-control qr-input" id="qr-input" 
-                           placeholder="Scan or manually enter QR code data">
+                           placeholder="Enter QR code data manually">
                 </div>
                 
                 <button class="btn btn-primary w-100 scan-button" onclick="verifyQR()">
@@ -159,8 +178,90 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <script>
         let recentCheckins = [];
+        let cameraStream = null;
+        let scanningInterval = null;
+
+        // Camera Functions
+        async function startCamera() {
+            try {
+                const video = document.getElementById('camera-video');
+                const cameraContainer = document.getElementById('camera-container');
+                const cameraBtn = document.getElementById('camera-btn');
+                const stopBtn = document.getElementById('stop-camera-btn');
+                
+                // Request camera access
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment', // Use back camera on mobile
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
+                
+                video.srcObject = cameraStream;
+                cameraContainer.style.display = 'block';
+                cameraBtn.style.display = 'none';
+                stopBtn.style.display = 'block';
+                
+                // Start QR code scanning
+                startQRScanning();
+                
+                showToast('success', 'Camera started! Point at QR code to scan.');
+                
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                showToast('danger', 'Camera access denied or not available. Please use manual input.');
+            }
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            
+            if (scanningInterval) {
+                clearInterval(scanningInterval);
+                scanningInterval = null;
+            }
+            
+            const cameraContainer = document.getElementById('camera-container');
+            const cameraBtn = document.getElementById('camera-btn');
+            const stopBtn = document.getElementById('stop-camera-btn');
+            
+            cameraContainer.style.display = 'none';
+            cameraBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
+            
+            showToast('info', 'Camera stopped.');
+        }
+
+        function startQRScanning() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+            const context = canvas.getContext('2d');
+            
+            scanningInterval = setInterval(() => {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    
+                    if (code) {
+                        console.log('QR Code detected:', code.data);
+                        document.getElementById('qr-input').value = code.data;
+                        stopCamera();
+                        verifyQR();
+                    }
+                }
+            }, 100); // Check every 100ms
+        }
 
         function verifyQR() {
             const qrInput = document.getElementById('qr-input');

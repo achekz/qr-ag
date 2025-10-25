@@ -25,10 +25,21 @@
                     </div>
                     <div class="col-md-6">
                         <h5><i class="fas fa-mobile-alt me-2"></i>Camera Scanner</h5>
-                        <div id="scanner-container" class="border rounded p-3 text-center">
+                        <div class="mb-3">
+                            <button class="btn btn-success w-100" onclick="startCamera()" id="camera-btn">
+                                <i class="fas fa-camera me-2"></i>Start Camera Scanner
+                            </button>
+                            <button class="btn btn-secondary w-100" onclick="stopCamera()" id="stop-camera-btn" style="display: none;">
+                                <i class="fas fa-stop me-2"></i>Stop Camera
+                            </button>
+                        </div>
+                        <div id="camera-container" class="border rounded p-3 text-center" style="display: none;">
+                            <video id="camera-video" autoplay playsinline style="width: 100%; height: 200px; object-fit: cover;"></video>
+                            <canvas id="camera-canvas" style="display: none;"></canvas>
+                        </div>
+                        <div id="scanner-placeholder" class="border rounded p-3 text-center">
                             <i class="fas fa-camera fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Camera scanner not implemented yet</p>
-                            <small class="text-muted">Use manual input for now</small>
+                            <p class="text-muted">Click "Start Camera Scanner" to scan QR codes</p>
                         </div>
                     </div>
                 </div>
@@ -118,8 +129,94 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
 let recentCheckins = [];
+let cameraStream = null;
+let scanningInterval = null;
+
+// Camera Functions
+async function startCamera() {
+    try {
+        const video = document.getElementById('camera-video');
+        const cameraContainer = document.getElementById('camera-container');
+        const cameraBtn = document.getElementById('camera-btn');
+        const stopBtn = document.getElementById('stop-camera-btn');
+        const placeholder = document.getElementById('scanner-placeholder');
+        
+        // Request camera access
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment', // Use back camera on mobile
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            } 
+        });
+        
+        video.srcObject = cameraStream;
+        cameraContainer.style.display = 'block';
+        placeholder.style.display = 'none';
+        cameraBtn.style.display = 'none';
+        stopBtn.style.display = 'block';
+        
+        // Start QR code scanning
+        startQRScanning();
+        
+        showAlert('success', 'Camera started! Point at QR code to scan.');
+        
+    } catch (error) {
+        console.error('Error accessing camera:', error);
+        showAlert('danger', 'Camera access denied or not available. Please use manual input.');
+    }
+}
+
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    
+    if (scanningInterval) {
+        clearInterval(scanningInterval);
+        scanningInterval = null;
+    }
+    
+    const cameraContainer = document.getElementById('camera-container');
+    const cameraBtn = document.getElementById('camera-btn');
+    const stopBtn = document.getElementById('stop-camera-btn');
+    const placeholder = document.getElementById('scanner-placeholder');
+    
+    cameraContainer.style.display = 'none';
+    placeholder.style.display = 'block';
+    cameraBtn.style.display = 'block';
+    stopBtn.style.display = 'none';
+    
+    showAlert('info', 'Camera stopped.');
+}
+
+function startQRScanning() {
+    const video = document.getElementById('camera-video');
+    const canvas = document.getElementById('camera-canvas');
+    const context = canvas.getContext('2d');
+    
+    scanningInterval = setInterval(() => {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            
+            if (code) {
+                console.log('QR Code detected:', code.data);
+                document.getElementById('qr-input').value = code.data;
+                stopCamera();
+                verifyQR();
+            }
+        }
+    }, 100); // Check every 100ms
+}
 
 function verifyQR() {
     const qrInput = document.getElementById('qr-input');
